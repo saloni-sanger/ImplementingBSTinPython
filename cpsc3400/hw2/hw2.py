@@ -5,103 +5,136 @@ Professor: Eric Larson
 Purpose: Use Python lists to implement BST.
 """
 
-#use python list to store binary search tree of integers
-#a tree consists of a single list with either 3 elements [value of root, node, left subtree, right subtree]
-#or zero elements [] representing an empty tree
-#[value of root, node, left subtree, right subtree] uses NESTED LISTS: left and right subtree are lists
+"""
+Note:
+A tree consists of a single list with either 3 elements 
+[value of root, node, left subtree, right subtree]
+or zero elements [] representing an empty tree.
+Nested lists are used: left and right subtree are lists.
+"""
 
 import collections
 import sys
 
+"""
+insert() notes for technical understanding:
+- base case if root is null add node with empry children
+- if duplicate entry found raise exception
+- otherwise continue search for where to place value
+"""
+
 def insert(tree, value):
-    if not tree: #if root is NULL
+    if not tree:
         return [value, [], []]
     else:
-        if tree[0] != value: #did not find dupe
-            if tree[0] < value: #if value greater then root search right, if not search left
+        class DuplicateEntry(Exception) : pass
+        if (tree[0] == value):
+            raise DuplicateEntry
+        else:
+            if tree[0] < value:
                 tree[2] = insert(tree[2], value)
             else:
                 tree[1] = insert(tree[1], value)
-        else:
-            print("Duplicate value detected: " + str(value))
     return tree
-    #insert value into the tree
-    #resulting tree does not need to be balanced
-    #if value is already in the tree, do not add entry and throw DuplicateEntry exception
-    #must create DuplicateEntry exception
-    #return tree with value inserted
+
+"""
+search() notes for technical understanding:
+- base case root is null, did not find value
+- base case value found
+- otherwise continue search
+"""
 
 def search(tree, value):
-    #base case if root is null, didn't find value
     if not tree:
         return False
-    #base case value found
     if tree[0] == value:
         return True
-    #if value bigger than this root search right, otherwise search left
     if tree[0] < value:
         return search(tree[2], value)
     return search(tree[1], value)
-    
-    #returns true if the value is in the tree and false otherwise
+
+"""
+inorder() notes for technical understanding:
+- generator function yields traversal values one by one
+"""
 
 def inorder(tree):
     if tree:
         yield from inorder(tree[1])
         yield tree[0]
         yield from inorder(tree[2])
-    #does inorder traversal of the nodes
-    #MUST implement using generator function, it yields the next node in the traversal
-    #if you use recursive function (recommended) you need to use "yield from" when 
-    #calling inorder recursively. 
-    #non-recursive function is allowed
 
-def heights(tree): #uses breadth-first search
+"""
+heights() notes for technical understanding:
+- uses breadth-first search
+- deque is a double-ended queue
+- if tree has no nodes return empty dictionary
+- append root (everything at height 0) to the queue
+- while queue is not empty pop elements from the
+current height 1 by 1
+if popped node is not null:
+add its value and height to the dictionary
+append left/right children to queue if they exist
+- once current level is finished increase height value and 
+process next level's queue.
+"""
+
+def heights(tree):
     heightDict = {}
     height = 0
-    queue = collections.deque() #deque is a doubler ended queue (can add/take from either end)
-    if not tree: #if tree has no nodes
+    queue = collections.deque()
+    if not tree: 
         return heightDict
     
     queue.append(tree)
 
     while queue:
         currSize = len(queue)
-        #while queue is not empty
         while currSize > 0:
-            #pop elements 1 by 1
             currNode = queue.popleft()
             currSize -= 1
 
-            #check if node is not NULL
             if currNode:
-                #for each element popped, add its value, height pair to the dict
                 heightDict[currNode[0]] = height
 
-                #check if left/right children exist
                 if currNode[1] is not []:
                     queue.append(currNode[1])
                 if currNode[2] is not []:
                     queue.append(currNode[2])
-        #increment height when currSize = 0
         height += 1
 
     return heightDict
-    #creates a dictionary where there is an entry for each node in the tree
-    #the key is the node value, value is height of that node. 
-    #height is 0 for the root and the number of edges the node is away from the root
-    #for all other nodes
+
+"""
+createTree() notes for technical understanding:
+- when getting line from file in python there is 
+a hidden \n charaacter at the end 
+(unless it is the last line)
+so if it exists, exclude that \n
+- if the line is not a single int, raise ValueError
+- ValueError raised because the type is correct (str)
+but the string value is invalid.
+- finally if it was a single int, try to insert it 
+into the tree, if it's a dupliate entry print error
+message.
+"""
 
 def createTree(tree, fileName):
     file = open(fileName)
     for line in file:
         if (line[-1] == "\n"):
-            line = line[:-1] #exclude the newline at the end
-        # print(line.isdigit()) #test
-        if line.isdigit():
-            tree = insert(tree, (int)(line))
-        else:
+            line = line[:-1] 
+        try:
+            if not line.isdigit():
+                raise ValueError
+        except ValueError:
             print("Invalid line: " + line)
+        finally:
+            if line.isdigit():
+                try:
+                    tree = insert(tree, (int)(line))
+                except:
+                    print("Duplicate value detected: " + line)
     return tree
 
 # DRIVER
@@ -128,10 +161,3 @@ heightDict = heights(tree)
 print(heightDict)
 print("Step 8:")
 print(max(heightDict.values()))
-
-
-
-
-
-
-
